@@ -24,11 +24,13 @@ config = {
             'temperature': 55,
             'fan_speed': 15
         }
-    ]
+    ],
+    'hysteresis': 0,
 }
 state = {
-    'fan_control_mode' : "automatic",
-    'fan_speed': 0
+    'fan_control_mode' : 'automatic',
+    'fan_speed': 0,
+    'hysteresis_wait': False
 }
 
 def ipmitool(args):
@@ -86,17 +88,36 @@ def parse_config():
         print("Missing or unspecified configuration file, using defaults.")
     else:
         print("Loading custom configuration file.")
-        parser = configparser.ConfigParser()
+        parser = configparser.ConfigParser(inline_comment_prefixes='#')
         parser.read(config['config_path'])
         for section in parser.sections():
-            if section == 'Debug':
-                config['debug'] = parser.getboolean(section, 'Enabled')
-            elif section == 'Interval':
-                config['interval'] = parser.getint(section, 'Seconds')
+            if section == 'General':
+                keypairs = [
+                    ['debug','Debug', 'bool'],
+                    ['interval', 'Interval', 'int'],
+                    ['hysteresis', 'Hysteresis', 'int']
+                ]
+                for keypair in keypairs:
+                    f = None
+                    if keypair[2] == 'bool':
+                        f = parser.getboolean
+                    elif keypair[2] == 'int':
+                        f = parser.getint
+                    try:
+                        config[keypair[0]] = f(section, keypair[1])
+                    except KeyError:
+                        pass
             elif re.match('^Threshold[123]$', section):
                 i = int(section[-1]) - 1
-                config['thresholds'][i]['temperature'] = parser.getint(section, 'Temperature')
-                config['thresholds'][i]['fan_speed'] = parser.getint(section, 'FanSpeed')
+                keypairs = [
+                    ['temperature','Temperature'],
+                    ['fan_speed', 'FanSpeed']
+                ]
+                for keypair in keypairs:
+                    try:
+                        config['thresholds'][i][keypair[0]] = parser.getint(section, keypair[1])
+                    except KeyError:
+                        pass
 
 def parse_opts():
     global config
@@ -118,6 +139,20 @@ def parse_opts():
             config['config_path'] = arg
         elif opt in ('-i', '--interval'):
             config['interval'] = arg
+
+def checkHysteresis(temperature, threshold_n):
+    global state
+
+    return (
+        not config['hysteresis'] or
+        (
+            config['hysteresis'] and (
+                state['fan_speed'] > config['thresholds'][threshold_n]['fan_speed'] or
+                state['fan_control_mode'] == 'automatic'
+            ) and
+            temperature <= config['thresholds'][threshold_n]['temperature'] - config['hysteresis']
+        )
+    )
 
 def main():
     global state
@@ -146,12 +181,28 @@ def main():
         if config['debug']:
             print("T:{}°C M:{} S:{}%".format(temp_average, state['fan_control_mode'], state['fan_speed']))
 
-        if temp_average <= config['thresholds'][0]['temperature']:
+        # Tavg < Threshold0
+        if (
+            temp_average <= config['thresholds'][0]['temperature'] and
+            checkHysteresis(temp_average, 0)
+        ):
             set_fan_speed(config['thresholds'][0]['fan_speed'])
-        elif config['thresholds'][0]['temperature'] < temp_average <= config['thresholds'][1]['temperature']:
+
+        # Threshold0 < Tavg ≤ Threshold1
+        elif (
+            config['thresholds'][0]['temperature'] < temp_average <= config['thresholds'][1]['temperature'] and
+            checkHysteresis(temp_average, 1)
+        ):
             set_fan_speed(config['thresholds'][1]['fan_speed'])
-        elif config['thresholds'][1]['temperature'] < temp_average <= config['thresholds'][2]['temperature']:
+
+        # Threshold1 < Tavg ≤ Threshold2
+        elif (
+            config['thresholds'][1]['temperature'] < temp_average <= config['thresholds'][2]['temperature'] and
+            checkHysteresis(temp_average, 2)
+        ):
             set_fan_speed(config['thresholds'][2]['fan_speed'])
+
+        # Tavg > Threshold2
         elif config['thresholds'][2]['temperature'] < temp_average:
             set_fan_control("automatic")
 

@@ -14,13 +14,17 @@ fi
 
 echo "*** Installing packaged dependencies..."
 apt-get update
-apt-get install -y python-virtualenv python3-virtualenv python3-dev libsensors4-dev ipmitool
+apt-get install -y build-essential python-virtualenv python3-virtualenv python3-dev libsensors4-dev ipmitool
 
 echo "*** Creating folder '$TARGETDIR'..."
-mkdir -p "$TARGETDIR"
+if [ ! -d "$TARGETDIR" ]; then
+    mkdir -p "$TARGETDIR"
+fi
 
 echo "*** Creating and activating Python3 virtualenv..."
-virtualenv -p python3 "$TARGETDIR/venv"
+if [ ! -d "$TARGETDIR/venv" ]; then
+    virtualenv -p python3 "$TARGETDIR/venv"
+fi
 source "$TARGETDIR/venv/bin/activate"
 
 echo "*** Installing Python dependencies..."
@@ -30,6 +34,9 @@ echo "*** Deactivating Python3 virtualenv..."
 deactivate
 
 echo "*** Copying script and configuration in place..."
+if [ -f "$TARGETDIR/fan_control.conf" ]; then
+    mv "$TARGETDIR/fan_control.conf{,.old}"
+fi
 cp fan_control.conf "$TARGETDIR/"
 cp fan_control.py "$TARGETDIR/"
 

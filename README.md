@@ -5,7 +5,7 @@
 
 - [Dell R710 Fan Control Script](#dell-r710-fan-control-script)
   - [Requisites](#requisites)
-  - [Installation](#installation)
+  - [Installation / Upgrade](#installation--upgrade)
   - [Configuration](#configuration)
   - [How it works](#how-it-works)
   - [Credits](#credits)
@@ -38,9 +38,9 @@
         Core 10:      +31.0°C  (high = +69.0°C, crit = +79.0°C)
         ```
 
-## Installation
+## Installation / Upgrade
 
-Clone the repo and run the installation script as root to configure the system:
+Clone the repo and run the installation script as root to configure the system or upgrade the already installed controller:
 
 ```text
 git clone https://github.com/nmaggioni/r710-fan-controller.git
@@ -48,7 +48,7 @@ cd r710-fan-controller
 sudo ./install.sh [<installation path>]
 ```
 
-The default installation path is `/opt/fan_control` and the service will be installed as `fan-control.service`.
+The default installation path is `/opt/fan_control` and the service will be installed as `fan-control.service`. If a configuration file already exists, it will be renamed with a `.old` extension.
 
 ## Configuration
 
@@ -56,8 +56,9 @@ You can tune the controller's settings via the `fan_control.conf` file in the in
 
 | Section | Property | Default Value | Description |
 | ------- | -------- | ------------- | ----------- |
-| Debug | Enabled | `false` | Toggle debug mode _(print ipmitools commands instead of executing them, additional logging)_. |
-| Interval | Seconds | 60 | How often (in seconds) to read the CPUs' temperatures and adjust the fans' speeds. |
+| General | Debug | `false` | Toggle debug mode _(print ipmitools commands instead of executing them, additional logging)_. |
+| General | Interval | 60 | How often (in seconds) to read the CPUs' temperatures and adjust the fans' speeds. |
+| General | Hysteresis | 0 | How many degrees (in °C) the CPUs' temperature must go below the threshold to trigger slowing the fans down. Prevents rapid speed changes, a good starting value can be `3`. |
 | Threshold{1,2,3} | Temperature | [32, 37, 55] | The upper bound (in °C) of this threshold, _see below for details._ |
 | Threshold{1,2,3} | FanSpeed | [9, 10, 15] | The speed (in %) at which fans will run for this threshold, _see below for details._ |
 
@@ -71,6 +72,8 @@ Every `Interval` the controller will get the temperatures of all the available C
 | Threshold1 < _Tavg_ ≤ Threshold2 | Threshold2 |
 | Threshold2 < _Tavg_ ≤ Threshold3 | Threshold3 |
 | _Tavg_ > Threshold3 | Automatic |
+
+If `Hysteresis` is set, the controller will wait for the temperature to go below _ThresholdN - Hysteresis_ temperature. For example: with a Threshold2 of 37°C and an hysteresis of 3°C, the fans won't slow down from Threshold3 to Threshold2 speed until the temperature reaches 34°C.
 
 ## Credits
 

@@ -35,7 +35,7 @@ deactivate
 
 echo "*** Copying script and configuration in place..."
 if [ -f "$TARGETDIR/fan_control.conf" ]; then
-    mv "$TARGETDIR/fan_control.conf{,.old}"
+    mv "$TARGETDIR/fan_control.conf"{,.old}
 fi
 cp fan_control.conf "$TARGETDIR/"
 cp fan_control.py "$TARGETDIR/"

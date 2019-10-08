@@ -88,7 +88,7 @@ def parse_config():
     if not os.path.isfile(config['config_path']):
         raise RuntimeError("Missing or unspecified configuration file.")
     else:
-        print("Loading custom configuration file.")
+        print("Loading configuration file.")
         _config = None
         try:
             with open(config['config_path'], 'r') as yaml_conf:

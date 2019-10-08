@@ -34,10 +34,10 @@ echo "*** Deactivating Python3 virtualenv..."
 deactivate
 
 echo "*** Copying script and configuration in place..."
-if [ -f "$TARGETDIR/fan_control.conf" ]; then
-    mv "$TARGETDIR/fan_control.conf"{,.old}
+if [ -f "$TARGETDIR/fan_control.yaml" ]; then
+    mv "$TARGETDIR/fan_control.yaml"{,.old}
 fi
-cp fan_control.conf "$TARGETDIR/"
+cp fan_control.yaml "$TARGETDIR/"
 cp fan_control.py "$TARGETDIR/"
 
 echo "*** Creating, enabling and starting SystemD service..."

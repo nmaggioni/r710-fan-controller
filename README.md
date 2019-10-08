@@ -1,6 +1,6 @@
 # Dell R710 Fan Control Script
 
-> A temperature-based fan speed controller for Dell servers (tested on an R710, should work with most PowerEdges).
+> A temperature-based fan speed controller for Dell servers (tested on an R710, should work with most PowerEdges). Supports both local and remote hosts.
 
 
 - [Dell R710 Fan Control Script](#dell-r710-fan-control-script)
@@ -8,6 +8,7 @@
   - [Installation / Upgrade](#installation--upgrade)
   - [Configuration](#configuration)
   - [How it works](#how-it-works)
+  - [Notes on remote hosts](#notes-on-remote-hosts)
   - [Credits](#credits)
 
 ---
@@ -15,8 +16,9 @@
 ## Requisites
 
 1. Python 3 is installed.
-2. **IPMI Over LAN** is enabled in iDRAC (_Login > Network/Security > IPMI Settings_).
-3. `lm-sensors` is installed and configured.
+2. **IPMI Over LAN** is enabled in all used iDRACs (_Login > Network/Security > IPMI Settings_).
+   + May not be needed if you're only managing the local machine.
+3. `lm-sensors` is installed and configured on the local machine.
    + Example output of `sensors` for a dual CPU system:
         ```text
         coretemp-isa-0000
@@ -52,19 +54,27 @@ The default installation path is `/opt/fan_control` and the service will be inst
 
 ## Configuration
 
-You can tune the controller's settings via the `fan_control.conf` file in the installation directory.
+You can tune the controller's settings via the `fan_control.yaml` file in the installation directory.
 
-| Section | Property | Default Value | Description |
-| ------- | -------- | ------------- | ----------- |
-| General | Debug | `false` | Toggle debug mode _(print ipmitools commands instead of executing them, additional logging)_. |
-| General | Interval | 60 | How often (in seconds) to read the CPUs' temperatures and adjust the fans' speeds. |
-| General | Hysteresis | 0 | How many degrees (in °C) the CPUs' temperature must go below the threshold to trigger slowing the fans down. Prevents rapid speed changes, a good starting value can be `3`. |
-| Threshold{1,2,3} | Temperature | [32, 37, 55] | The upper bound (in °C) of this threshold, _see below for details._ |
-| Threshold{1,2,3} | FanSpeed | [9, 10, 15] | The speed (in %) at which fans will run for this threshold, _see below for details._ |
+The file is made of two main sections, `general` and `hosts`. The first one contains global options; the second one, `hosts`, is a list of hosts to manage. Each of them must contain a `temperatures` and a `speeds` lists at a minimum, both of exactly three values.
+
+Remote hosts must also contain the `remote_temperature_command` string and the `remote_ipmi_credentials` structure.
+
+| Key | Description |
+| --- | --- |
+| `general`.`debug` | Toggle debug mode _(print ipmitools commands instead of executing them, enable additional logging)_. |
+| `general`.`interval` | How often (in seconds) to read the CPUs' temperatures and adjust the fans' speeds. |
+| `general`.`hysteresis` | How many degrees (in °C) the CPUs' temperature must go below the threshold to trigger slowing the fans down. _Prevents rapid speed changes, a good starting value can be `3`._ |
+| `hosts`_[n]_.`temperatures` | A list of three upper bounds (in °C) of temperature thresholds. _See [below](#how-it-works) for details._ |
+| `hosts`_[n]_.`speeds` | A list of three speeds (in %) at which fans will run for the correspondent threshold. _See [below](#how-it-works) for details._ |
+| `hosts`_[n]_.`remote_temperature_command` | **For remote hosts only.** A command that will be executed to obtain the temperatures of this remote system. _See [notes](#notes-on-remote-hosts) for details._ |
+| `hosts`_[n]_.`remote_ipmi_credentials`.`host` | **For remote hosts only.** The iDRAC hostname/IP of this remote system. _See [notes](#notes-on-remote-hosts) for details._ |
+| `hosts`_[n]_.`remote_ipmi_credentials`.`username` | **For remote hosts only.** The username used to login to this remote system's iDRAC. _See [notes](#notes-on-remote-hosts) for details._ |
+| `hosts`_[n]_.`remote_ipmi_credentials`.`password` | **For remote hosts only.** The password used to login to this remote system's iDRAC. _See [notes](#notes-on-remote-hosts) for details._ |
 
 ## How it works
 
-Every `Interval` the controller will get the temperatures of all the available CPU cores, average them and round the result (referred to as _Tavg_ below). It will then follow this logic to set the fans' speed percentage or engage automatic (hardware managed) control.
+Every `general`.`interval` seconds the controller will fetch the temperatures of all the available CPU cores, average them and round the result (referred to as _Tavg_ below). It will then follow this logic to set the fans' speed percentage or engage automatic (hardware managed) control.
 
 | Condition | Fan speed |
 | --- | --- |
@@ -73,7 +83,13 @@ Every `Interval` the controller will get the temperatures of all the available C
 | Threshold2 < _Tavg_ ≤ Threshold3 | Threshold3 |
 | _Tavg_ > Threshold3 | Automatic |
 
-If `Hysteresis` is set, the controller will wait for the temperature to go below _ThresholdN - Hysteresis_ temperature. For example: with a Threshold2 of 37°C and an hysteresis of 3°C, the fans won't slow down from Threshold3 to Threshold2 speed until the temperature reaches 34°C.
+If `general`.`hysteresis` is set, the controller will wait for the temperature to go below _ThresholdN - Hysteresis_ temperature. For example: with a Threshold2 of 37°C and an hysteresis of 3°C, the fans won't slow down from Threshold3 to Threshold2 speed until the temperature reaches 34°C.
+
+## Notes on remote hosts
+
+This controller can monitor the temperature and change the fan speed of remote hosts too: the only caveat is that you'll need to extract the temperatures via an external command. This could be via SSH, for example. The controller expects such a command to return **a newline-delimited list of numbers parseable as floats**.
+
+**The included example is a good fit for a remote FreeNAS host**: it will connect to it via SSH and extract the temperature of all CPU cores, one per line. This way you'll be able to manage that machine just as well as the local one without applying any hardly trackable modification to the base OS.
 
 ## Credits
 

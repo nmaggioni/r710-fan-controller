@@ -56,15 +56,15 @@ The default installation path is `/opt/fan_control` and the service will be inst
 
 You can tune the controller's settings via the `fan_control.yaml` file in the installation directory.
 
-The file is made of two main sections, `general` and `hosts`. The first one contains global options; the second one, `hosts`, is a list of hosts to manage. Each of them must contain a `temperatures` and a `speeds` lists at a minimum, both of exactly three values.
+The file is made of two main sections, `general` and `hosts`. The first one contains global options; the second one, `hosts`, is a list of hosts to manage. Each of them must contain a `temperatures` and a `speeds` lists at a minimum, both of exactly three values. If the `hysteresis` key isn't specified, its value is assumed to be `0`.
 
-Remote hosts must also contain the `remote_temperature_command` string and the `remote_ipmi_credentials` structure.
+Remote hosts must also contain both the `remote_temperature_command` string and the `remote_ipmi_credentials` structure.
 
 | Key | Description |
 | --- | --- |
 | `general`.`debug` | Toggle debug mode _(print ipmitools commands instead of executing them, enable additional logging)_. |
 | `general`.`interval` | How often (in seconds) to read the CPUs' temperatures and adjust the fans' speeds. |
-| `general`.`hysteresis` | How many degrees (in °C) the CPUs' temperature must go below the threshold to trigger slowing the fans down. _Prevents rapid speed changes, a good starting value can be `3`._ |
+| `hosts`_[n]_.`hysteresis` | How many degrees (in °C) the CPUs' temperature must go below the threshold to trigger slowing the fans down. _Prevents rapid speed changes, a good starting value can be `3`._ |
 | `hosts`_[n]_.`temperatures` | A list of three upper bounds (in °C) of temperature thresholds. _See [below](#how-it-works) for details._ |
 | `hosts`_[n]_.`speeds` | A list of three speeds (in %) at which fans will run for the correspondent threshold. _See [below](#how-it-works) for details._ |
 | `hosts`_[n]_.`remote_temperature_command` | **For remote hosts only.** A command that will be executed to obtain the temperatures of this remote system. _See [notes](#notes-on-remote-hosts) for details._ |
@@ -83,7 +83,7 @@ Every `general`.`interval` seconds the controller will fetch the temperatures of
 | Threshold2 < _Tavg_ ≤ Threshold3 | Threshold3 |
 | _Tavg_ > Threshold3 | Automatic |
 
-If `general`.`hysteresis` is set, the controller will wait for the temperature to go below _ThresholdN - Hysteresis_ temperature. For example: with a Threshold2 of 37°C and an hysteresis of 3°C, the fans won't slow down from Threshold3 to Threshold2 speed until the temperature reaches 34°C.
+If `hysteresis` is set for a given host, the controller will wait for the temperature to go below _ThresholdN - hysteresis_ temperature. For example: with a Threshold2 of 37°C and an hysteresis of 3°C, the fans won't slow down from Threshold3 to Threshold2 speed until the temperature reaches 34°C.
 
 ## Notes on remote hosts
 
@@ -95,4 +95,4 @@ This controller can monitor the temperature and change the fan speed of remote h
 
 Major thanks go to [NoLooseEnds's directions](https://github.com/NoLooseEnds/Scripts/tree/master/R710-IPMI-TEMP) for the core commands and [sulaweyo's ruby script](https://github.com/sulaweyo/r710-fan-control) for the idea of automating them.
 
-**Note:** The key difference of this script is that it's based on the temperature of the CPUs' cores, not on the ambient temperature sensor on the server's motherboard. The R710 does not expose CPU temperature over IPMI, but other models do; this script should work with them nonetheless.
+**Note:** The key difference of this script, other than handling remote hosts, is that it's based on the temperature of the CPUs' cores and not on the ambient temperature sensor on the server's motherboard. The R710 does not expose CPU temperature over IPMI, but other models do; this script should work with them nonetheless.

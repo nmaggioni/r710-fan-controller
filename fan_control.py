@@ -13,8 +13,7 @@ config = {
     'config_path': '/opt/fan_control/fan_control.yaml',
     'general': {
         'debug': False,
-        'interval': 60,
-        'hysteresis': 3
+        'interval': 60
     },
     'hosts': []
 }
@@ -100,6 +99,8 @@ def parse_config():
         config['general']['interval'] = _interval
 
         for host in config['hosts']:
+            if 'hysteresis' not in list(host.keys()):
+                host['hysteresis'] = 0
             if len(host['temperatures']) != 3:
                 raise ConfigError('Host "{}" has {} temperature thresholds instead of 3.'.format(host['name'], len(host['temperatures'])))
             if len(host['speeds']) != 3:
@@ -147,13 +148,13 @@ def checkHysteresis(temperature, threshold_n, host):
     global state
 
     return (
-        not config['general']['hysteresis'] or
+        not host['hysteresis'] or
         (
-            config['general']['hysteresis'] and (
+            host['hysteresis'] and (
                 state[host['name']]['fan_speed'] > host['speeds'][threshold_n] or
                 state[host['name']]['fan_control_mode'] == 'automatic'
             ) and
-            temperature <= host['temperatures'][threshold_n] - config['general']['hysteresis']
+            temperature <= host['temperatures'][threshold_n] - host['hysteresis']
         )
     )
 

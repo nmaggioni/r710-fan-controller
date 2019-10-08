@@ -1,10 +1,10 @@
 general:
   debug: false
-  interval: 60 # s
-  hysteresis: 3 # °C
+  interval: 60
 
 hosts:
   - name: MyLocalHost
+    hysteresis: 3
     temperatures:
       - 32
       - 37
@@ -20,6 +20,7 @@ hosts:
   #    host: some.idrac.domain
   #    username: idrac-user
   #    password: idrac-password
+  #  hysteresis: 0
   #  temperatures:
   #    - 32
   #    - 37

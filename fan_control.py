@@ -53,11 +53,11 @@ def set_fan_control(wanted_mode, host):
     if wanted_mode == "manual" or wanted_mode == "automatic":
         if wanted_mode == "manual" and state[host['name']]['fan_control_mode'] == "automatic":
             if not config['general']['debug']:
-                print("Switching to manual mode")
+                print("[{}] Switching to manual mode".format(host['name']))
             ipmitool("raw 0x30 0x30 0x01 0x00", host)
         elif wanted_mode == "automatic" and state[host['name']]['fan_control_mode'] == "manual":
             if not config['general']['debug']:
-                print("Switching to automatic mode")
+                print("[{}] Switching to automatic mode".format(host['name']))
             ipmitool("raw 0x30 0x30 0x01 0x01", host)
             state[host['name']]['fan_speed'] = 0
 
@@ -76,7 +76,7 @@ def set_fan_speed(threshold_n, host):
             set_fan_control("manual", host)
             time.sleep(1)
         if not config['general']['debug']:
-            print("Setting fans speed to {}%".format(wanted_percentage))
+            print("[{}] Setting fans speed to {}%".format(host['name'], wanted_percentage))
         ipmitool("raw 0x30 0x30 0x02 0xff {}".format(wanted_percentage_hex), host)
         state[host['name']]['fan_speed'] = wanted_percentage
 

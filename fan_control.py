@@ -29,9 +29,9 @@ def ipmitool(args, host):
     cmd = ["ipmitool"]
     if state[host['name']]['is_remote']:
         cmd += ['-I', 'lanplus']
-        cmd += ['-H', config['remote_ipmi_credentials']['host']]
-        cmd += ['-U', config['remote_ipmi_credentials']['username']]
-        cmd += ['-P', config['remote_ipmi_credentials']['password']]
+        cmd += ['-H', host['remote_ipmi_credentials']['host']]
+        cmd += ['-U', host['remote_ipmi_credentials']['username']]
+        cmd += ['-P', host['remote_ipmi_credentials']['password']]
     cmd += (args.split(' '))
     if config['general']['debug']:
         print(re.sub(r'-([UP]) (\S+)', r'-\1 ___', ' '.join(cmd))) # Do not log IPMI credentials
@@ -104,14 +104,14 @@ def parse_config():
                 raise ConfigError('Host "{}" has {} temperature thresholds instead of 3.'.format(host['name'], len(host['temperatures'])))
             if len(host['speeds']) != 3:
                 raise ConfigError('Host "{}" has {} fan speeds instead of 3.'.format(host['name'], len(host['speeds'])))
-            if ('remote_temperature_command' in list(host.keys()) or 'remote_ipmi_redentials' in list(host.keys()))  and \
-                ('remote_temperature_command' not in list(host.keys()) or 'remote_ipmi_redentials' not in list(host.keys())):
-                raise ConfigError('Host "{}" must specify either none or both "remote_temperature_command" and "remote_ipmi_redentials" keys.'.format(host['name']))
-            if 'remote_ipmi_redentials' in list(host.keys()) and \
-                ('host' not in list(host['remote_ipmi_redentials'].keys()) or \
-                'username' not in list(host['remote_ipmi_redentials'].keys()) or \
-                'password' not in list(host['remote_ipmi_redentials'].keys())):
-                raise ConfigError('Host "{}" must specify either none or all "host", "username" and "password" values for the "remote_ipmi_redentials" key.'.format(host['name']))
+            if ('remote_temperature_command' in list(host.keys()) or 'remote_ipmi_credentials' in list(host.keys()))  and \
+                ('remote_temperature_command' not in list(host.keys()) or 'remote_ipmi_credentials' not in list(host.keys())):
+                raise ConfigError('Host "{}" must specify either none or both "remote_temperature_command" and "remote_ipmi_credentials" keys.'.format(host['name']))
+            if 'remote_ipmi_credentials' in list(host.keys()) and \
+                ('host' not in list(host['remote_ipmi_credentials'].keys()) or \
+                'username' not in list(host['remote_ipmi_credentials'].keys()) or \
+                'password' not in list(host['remote_ipmi_credentials'].keys())):
+                raise ConfigError('Host "{}" must specify either none or all "host", "username" and "password" values for the "remote_ipmi_credentials" key.'.format(host['name']))
             # TODO: check presence/validity of values instead of keys presence only
 
             if host['name'] in list(state.keys()):

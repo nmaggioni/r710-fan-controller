@@ -51,15 +51,14 @@ def set_fan_control(wanted_mode, host):
     global state
 
     if wanted_mode == "manual" or wanted_mode == "automatic":
-
         if wanted_mode == "manual" and state[host['name']]['fan_control_mode'] == "automatic":
             if not config['general']['debug']:
                 print("Switching to manual mode")
-            ipmitool("raw 0x30 0x30 0x01 0x00", host['name'])
+            ipmitool("raw 0x30 0x30 0x01 0x00", host)
         elif wanted_mode == "automatic" and state[host['name']]['fan_control_mode'] == "manual":
             if not config['general']['debug']:
                 print("Switching to automatic mode")
-            ipmitool("raw 0x30 0x30 0x01 0x01", host['name'])
+            ipmitool("raw 0x30 0x30 0x01 0x01", host)
             state[host['name']]['fan_speed'] = 0
 
         state[host['name']]['fan_control_mode'] = wanted_mode
@@ -74,11 +73,11 @@ def set_fan_speed(threshold_n, host):
     if 5 <= wanted_percentage <= 100:
         wanted_percentage_hex = "{0:#0{1}x}".format(wanted_percentage, 4)
         if state[host['name']]['fan_control_mode'] != "manual":
-            set_fan_control("manual", host['name'])
+            set_fan_control("manual", host)
             time.sleep(1)
         if not config['general']['debug']:
             print("Setting fans speed to {}%".format(wanted_percentage))
-        ipmitool("raw 0x30 0x30 0x02 0xff {}".format(wanted_percentage_hex), host['name'])
+        ipmitool("raw 0x30 0x30 0x02 0xff {}".format(wanted_percentage_hex), host)
         state[host['name']]['fan_speed'] = wanted_percentage
 
 def parse_config():

@@ -229,17 +229,14 @@ def main():
 
 
 def graceful_shutdown(signalnum, frame):
-    strsignal = signal.strsignal(signalnum)
-    print(f"setting hosts back to automatic fan control because we received the signal: {strsignal}")
-
+    print("Signal {} received, giving up control".format(signalnum))
     for host in config['hosts']:
         set_fan_control("automatic", host)
-
     sys.exit(0)
 
 
 if __name__ == "__main__":
-    # Register signal handler on SIGTERM to do a graceful shutdown
+    # Reset fan control to automatic when getting killed
     signal.signal(signal.SIGTERM, graceful_shutdown)
 
     try:

@@ -235,7 +235,7 @@ def graceful_shutdown(signalnum, frame):
     for host in config['hosts']:
         set_fan_control("automatic", host)
 
-    sys.exit(128 + signalnum)
+    sys.exit(0)
 
 
 if __name__ == "__main__":

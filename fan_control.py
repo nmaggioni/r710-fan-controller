@@ -8,6 +8,7 @@ import sensors # https://github.com/bastienleonard/pysensors.git
 import subprocess
 import sys
 import time
+import signal
 
 config = {
     'config_path': '/opt/fan_control/fan_control.yaml',
@@ -226,7 +227,21 @@ def main():
 
         time.sleep(config['general']['interval'])
 
+
+def graceful_shutdown(signalnum, frame):
+    strsignal = signal.strsignal(signalnum)
+    print(f"setting hosts back to automatic fan control because we received the signal: {strsignal}")
+
+    for host in config['hosts']:
+        set_fan_control("automatic", host)
+
+    sys.exit(128 + signalnum)
+
+
 if __name__ == "__main__":
+    # Register signal handler on SIGTERM to do a graceful shutdown
+    signal.signal(signal.SIGTERM, graceful_shutdown)
+
     try:
         try:
             parse_opts()

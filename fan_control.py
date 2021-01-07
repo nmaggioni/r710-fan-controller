@@ -96,8 +96,10 @@ def parse_config():
         except yaml.YAMLError as err:
             raise err # TODO: pretty print
         config = _config
-        config['general']['debug'] = _debug
-        config['general']['interval'] = _interval
+        if 'debug' not in list(config['general'].keys()):
+            config['general']['debug'] = _debug
+        if 'interval' not in list(config['general'].keys()):
+            config['general']['interval'] = _interval
 
         for host in config['hosts']:
             if 'hysteresis' not in list(host.keys()):

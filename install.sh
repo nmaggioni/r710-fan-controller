@@ -15,7 +15,7 @@ fi
 echo "*** Installing packaged dependencies..."
 if [ -x "$(command -v apt-get)" ]; then
 	apt-get update
-	apt-get install -y build-essential python-virtualenv python3-virtualenv python3-dev libsensors4-dev ipmitool
+	apt-get install -y build-essential python3-virtualenv python3-dev libsensors4-dev ipmitool
 elif [ -x "$(command -v dnf)" ]; then
 	dnf groupinstall -y "Development Tools"
 	dnf install -y python3-virtualenv python3-devel lm_sensors-devel ipmitool
@@ -27,9 +27,11 @@ if [ ! -d "$TARGETDIR" ]; then
 fi
 
 echo "*** Creating and activating Python3 virtualenv..."
-if [ ! -d "$TARGETDIR/venv" ]; then
-    virtualenv -p python3 "$TARGETDIR/venv"
+if [ -d "$TARGETDIR/venv" ]; then
+    echo "*** Existing venv found, purging it."
+    rm -r "$TARGETDIR/venv"
 fi
+virtualenv -p python3 "$TARGETDIR/venv"
 source "$TARGETDIR/venv/bin/activate"
 
 echo "*** Installing Python dependencies..."
@@ -45,12 +47,12 @@ fi
 cp fan_control.yaml "$TARGETDIR/"
 cp fan_control.py "$TARGETDIR/"
 
-echo "*** Creating, enabling and starting SystemD service..."
+echo "*** Creating, (re)starting and enabling SystemD service..."
 cp fan-control.service /etc/systemd/system/fan-control.service
 sed -i "s#{TARGETDIR}#$TARGETDIR#g" /etc/systemd/system/fan-control.service
 systemctl daemon-reload
+systemctl restart fan-control
 systemctl enable fan-control
-systemctl start fan-control
 
 echo "*** Waiting for the service to start..."
 sleep 3

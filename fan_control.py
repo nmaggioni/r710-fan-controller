@@ -150,16 +150,18 @@ def parse_opts():
 def checkHysteresis(temperature, threshold_n, host):
     global state
 
-    return (
-        not host['hysteresis'] or
-        (
-            host['hysteresis'] and (
-                state[host['name']]['fan_speed'] > host['speeds'][threshold_n] or
-                state[host['name']]['fan_control_mode'] == 'automatic'
-            ) and
-            temperature <= host['temperatures'][threshold_n] - host['hysteresis']
-        )
-    )
+    # Skip checks if hysteresis is disabled for this host
+    if not host['hysteresis']:
+        return True
+
+    # Fan speed is higher than it should be or automatic mode is currently enabled
+    if (state[host['name']]['fan_speed'] > host['speeds'][threshold_n] or
+            state[host['name']]['fan_control_mode'] == 'automatic'):
+        # T ≤ (threshold - hysteresis)
+        return temperature <= host['temperatures'][threshold_n] - host['hysteresis']
+
+    # Fan speed is lower than it should be, step up immediately and ignore hysteresis
+    return True
 
 def compute_fan_speed(temp_average, host):
     global state

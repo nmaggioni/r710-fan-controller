@@ -150,17 +150,17 @@ def parse_opts():
 def checkHysteresis(temperature, threshold_n, host):
     global state
 
-    # Check if hysteresis checking is not even wanted.
+    # Skip checks if hysteresis is disabled for this host
     if not host['hysteresis']:
         return True
 
-    # Check if currently above the threshold or in automatic mode.
+    # Fan speed is higher than it should be or automatic mode is currently enabled
     if (state[host['name']]['fan_speed'] > host['speeds'][threshold_n] or
             state[host['name']]['fan_control_mode'] == 'automatic'):
-        # Check if below threshold minus hysteresis value.
+        # T ≤ (threshold - hysteresis)
         return temperature <= host['temperatures'][threshold_n] - host['hysteresis']
 
-    # We are still below the threshold and in manual mode -> no check needed as only stepping down is checked.
+    # Fan speed is lower than it should be, step up immediately and ignore hysteresis
     return True
 
 def compute_fan_speed(temp_average, host):

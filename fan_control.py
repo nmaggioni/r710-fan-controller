@@ -4,7 +4,7 @@ import yaml
 import getopt
 import os
 import re
-import sensors # https://github.com/bastienleonard/pysensors.git
+import sensors  # https://github.com/bastienleonard/pysensors.git
 import subprocess
 import sys
 import time
@@ -20,8 +20,10 @@ config = {
 }
 state = {}
 
+
 class ConfigError(Exception):
     pass
+
 
 def ipmitool(args, host):
     global state
@@ -34,7 +36,7 @@ def ipmitool(args, host):
         cmd += ['-P', host['remote_ipmi_credentials']['password']]
     cmd += (args.split(' '))
     if config['general']['debug']:
-        print(re.sub(r'-([UP]) (\S+)', r'-\1 ___', ' '.join(cmd))) # Do not log IPMI credentials
+        print(re.sub(r'-([UP]) (\S+)', r'-\1 ___', ' '.join(cmd)))  # Do not log IPMI credentials
         return True
 
     try:
@@ -46,6 +48,7 @@ def ipmitool(args, host):
         print("\"{}\" command has timed out".format(cmd), file=sys.stderr)
         return False
     return True
+
 
 def set_fan_control(wanted_mode, host):
     global state
@@ -62,6 +65,7 @@ def set_fan_control(wanted_mode, host):
             state[host['name']]['fan_speed'] = 0
 
         state[host['name']]['fan_control_mode'] = wanted_mode
+
 
 def set_fan_speed(threshold_n, host):
     global state
@@ -80,6 +84,7 @@ def set_fan_speed(threshold_n, host):
         ipmitool("raw 0x30 0x30 0x02 0xff {}".format(wanted_percentage_hex), host)
         state[host['name']]['fan_speed'] = wanted_percentage
 
+
 def parse_config():
     global config
     _debug = config['general']['debug']
@@ -94,7 +99,7 @@ def parse_config():
             with open(config['config_path'], 'r') as yaml_conf:
                 _config = yaml.safe_load(yaml_conf)
         except yaml.YAMLError as err:
-            raise err # TODO: pretty print
+            raise err  # TODO: pretty print
         config = _config
         if 'debug' not in list(config['general'].keys()):
             config['general']['debug'] = _debug
@@ -108,13 +113,13 @@ def parse_config():
                 raise ConfigError('Host "{}" has {} temperature thresholds instead of 3.'.format(host['name'], len(host['temperatures'])))
             if len(host['speeds']) != 3:
                 raise ConfigError('Host "{}" has {} fan speeds instead of 3.'.format(host['name'], len(host['speeds'])))
-            if ('remote_temperature_command' in list(host.keys()) or 'remote_ipmi_credentials' in list(host.keys()))  and \
-                ('remote_temperature_command' not in list(host.keys()) or 'remote_ipmi_credentials' not in list(host.keys())):
+            if ('remote_temperature_command' in list(host.keys()) or 'remote_ipmi_credentials' in list(host.keys())) and \
+               ('remote_temperature_command' not in list(host.keys()) or 'remote_ipmi_credentials' not in list(host.keys())):
                 raise ConfigError('Host "{}" must specify either none or both "remote_temperature_command" and "remote_ipmi_credentials" keys.'.format(host['name']))
             if 'remote_ipmi_credentials' in list(host.keys()) and \
-                ('host' not in list(host['remote_ipmi_credentials'].keys()) or \
-                'username' not in list(host['remote_ipmi_credentials'].keys()) or \
-                'password' not in list(host['remote_ipmi_credentials'].keys())):
+                ('host' not in list(host['remote_ipmi_credentials'].keys()) or
+                 'username' not in list(host['remote_ipmi_credentials'].keys()) or
+                 'password' not in list(host['remote_ipmi_credentials'].keys())):
                 raise ConfigError('Host "{}" must specify either none or all "host", "username" and "password" values for the "remote_ipmi_credentials" key.'.format(host['name']))
             # TODO: check presence/validity of values instead of keys presence only
 
@@ -126,15 +131,16 @@ def parse_config():
                 'fan_speed': 0
             }
 
+
 def parse_opts():
     global config
     help_str = "fan_control.py [-d] [-c <path_to_config>] [-i <interval>]"
 
     try:
-        opts, _ = getopt.getopt(sys.argv[1:],"hdc:i:",["help","debug","config=","interval="])
+        opts, _ = getopt.getopt(sys.argv[1:], "hdc:i:", ["help", "debug", "config=", "interval="])
     except getopt.GetoptError as e:
-      print("Unrecognized option. Usage:\n{}".format(help_str))
-      raise getopt.GetoptError(e)
+        print("Unrecognized option. Usage:\n{}".format(help_str))
+        raise getopt.GetoptError(e)
 
     for opt, arg in opts:
         if opt in ('-h', '--help'):
@@ -146,6 +152,7 @@ def parse_opts():
             config['config_path'] = arg
         elif opt in ('-i', '--interval'):
             config['general']['interval'] = arg
+
 
 def checkHysteresis(temperature, threshold_n, host):
     global state
@@ -162,6 +169,7 @@ def checkHysteresis(temperature, threshold_n, host):
 
     # Fan speed is lower than it should be, step up immediately and ignore hysteresis
     return True
+
 
 def compute_fan_speed(temp_average, host):
     global state
@@ -193,6 +201,7 @@ def compute_fan_speed(temp_average, host):
     # Tavg > Threshold2
     elif host['temperatures'][2] < temp_average:
         set_fan_control("automatic", host)
+
 
 def main():
     global config

@@ -4,6 +4,7 @@ general:
 
 hosts:
   - name: MyLocalHost
+    #temperature_command: sensors coretemp-isa-0000 | awk '{ print $3 }' | grep -Ev 'adapter|^$' | sed 's/+\([0-9.]\+\).*$/\1/g' # must return a newline-delimited list of floats
     hysteresis: 3
     temperatures:
       - 32

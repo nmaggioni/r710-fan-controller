@@ -211,7 +211,7 @@ def main():
         for host in config['hosts']:
             temps = []
 
-            if not state[host['name']]['is_remote']:
+            if not state[host['name']]['is_remote'] and 'temperature_command' not in list(host.keys()):
                 cores = []
                 for sensor in sensors.get_detected_chips():
                     if sensor.prefix == "coretemp":
@@ -222,7 +222,8 @@ def main():
                             if subfeature.name.endswith("_input"):
                                 temps.append(core.get_value(subfeature.number))
             else:
-                cmd = os.popen(host['remote_temperature_command'])
+                command_key = 'remote_temperature_command' if 'remote_temperature_command' in list(host.keys()) else 'temperature_command'
+                cmd = os.popen(host[command_key])
                 temps = list(map(lambda n: float(n), cmd.read().strip().split('\n')))
                 cmd.close()
 

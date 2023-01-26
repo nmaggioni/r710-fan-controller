@@ -1,2 +1,2 @@
-git+https://github.com/bastienleonard/pysensors.git
-pyyaml==5.1.2
+git+https://github.com/bastienleonard/pysensors.git@e1ead6b73b2fa14e7baaa855c3e47b078020b4f8
+pyyaml==6.0

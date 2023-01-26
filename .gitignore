@@ -159,3 +159,6 @@ pip-selfcheck.json
 # End of https://www.gitignore.io/api/vim,python,virtualenv,visualstudiocode
 
 .vscode
+keys/*
+!keys/.gitkeep
+fan_control.yaml

@@ -3,13 +3,13 @@
 > A temperature-based fan speed controller for Dell servers (tested on an R710, should work with most PowerEdges). Supports both local and remote hosts.
 
 
-- [Dell R710 Fan Control Script](#dell-r710-fan-control-script)
-  - [Requisites](#requisites)
-  - [Installation / Upgrade](#installation--upgrade)
-  - [Configuration](#configuration)
-  - [How it works](#how-it-works)
-  - [Notes on remote hosts](#notes-on-remote-hosts)
-  - [Credits](#credits)
+- [Requisites](#requisites)
+- [Installation / Upgrade](#installation--upgrade)
+  - [Docker](#docker)
+- [Configuration](#configuration)
+- [How it works](#how-it-works)
+- [Notes on remote hosts](#notes-on-remote-hosts)
+- [Credits](#credits)
 
 ---
 
@@ -51,6 +51,17 @@ sudo ./install.sh [<installation path>]
 ```
 
 The default installation path is `/opt/fan_control` and the service will be installed as `fan-control.service`. If a configuration file already exists, it will be renamed with a `.old` extension.
+
+### Docker
+
+To deploy remote fan management with Docker (`fan_control` running on a separate host and only interacting with remote ones, see [Notes on remote hosts](#notes-on-remote-hosts)), build the image in the repo and bind mount your own YAML config and SSH keys folder:
+
+```bash
+docker build -t fan_control .
+docker run -d --restart=always --name fan_control -v "./fan_control.yaml:/app/fan_control.yaml:ro" -v "./keys:/app/keys:ro" fan_control
+```
+
+Running this tool under a proper orchestrator is advised.
 
 ## Configuration
 

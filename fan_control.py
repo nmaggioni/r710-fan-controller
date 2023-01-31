@@ -92,7 +92,7 @@ def parse_config():
 
     config_path = None
     for path in config['config_paths']:
-        if os.path.isfile(config['config_paths']):
+        if os.path.isfile(path):
             config_path = path
     if not config_path:
         raise RuntimeError("Missing or unspecified configuration file.")
